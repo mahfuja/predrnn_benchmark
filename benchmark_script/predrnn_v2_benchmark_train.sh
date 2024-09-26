@@ -4,10 +4,10 @@ python -u run.py \
     --is_training 1 \
     --device cuda \
     --dataset_name benchmark \
-    --train_data_paths data/benchmark \
-    --valid_data_paths data/benchmark  \
-    --save_dir checkpoints/benchmark_predrnn_v2 \
-    --gen_frm_dir results/benchmark_predrnn_v2 \
+    --train_data_paths /home/makter1/PredRNN/data/benchmark \
+    --valid_data_paths /home/makter1/PredRNN/data/benchmark  \
+    --save_dir /home/makter1/PredRNN/checkpoints/benchmark_predrnn_v2 \
+    --gen_frm_dir /home/makter1/PredRNN/results/benchmark_predrnn_v2 \
     --model_name predrnn_v2 \
     --reverse_input 1 \
     --img_height 1200 \

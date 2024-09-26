@@ -9,7 +9,7 @@ from core.data_provider import datasets_factory
 from core.models.model_factory import Model
 from core.utils import preprocess
 import core.trainer as trainer
-
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:1024"
 # -----------------------------------------------------------------------------
 parser = argparse.ArgumentParser(description='PyTorch video prediction model - PredRNN')
 
@@ -184,13 +184,14 @@ def train_wrapper(model):
             train_input_handle.begin(do_shuffle=True)
         ims = train_input_handle.get_batch()
         ims = preprocess.reshape_patch(ims, args.patch_size)
-
+        
         if args.reverse_scheduled_sampling == 1:
             real_input_flag = reserve_schedule_sampling_exp(itr)
         else:
             eta, real_input_flag = schedule_sampling(eta, itr)
+        
         train_loss = trainer.train(model, ims, real_input_flag, args, itr)
-
+        #print('itr: ' + str(itr) + ', train loss: ' + str(train_loss))
         if itr % args.snapshot_interval == 0:
             model.save(itr)
         

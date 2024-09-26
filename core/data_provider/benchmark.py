@@ -2,6 +2,7 @@ __author__ = 'mahfuja'
 import numpy as np
 import os
 import cv2
+import dask
 from PIL import Image
 import logging
 import random
@@ -80,8 +81,12 @@ class DataProcess:
         self.image_width = input_param['image_width']
         
         # Hard coded training and test persons (prevent same person occurring in train - test set)
-        self.train_date = ['20180101', '20180102', '20180103', '20180104', '20180105', '20180106', '20180107', '20180108'] #
-        self.test_date = ['20180109' , '20180110'] #
+        #self.train_date = ['20180101','20180102','20180103','20180104','20180105','20180106','20180110','20180115','20180116','20180117','20180119',
+        #        '20180120','20180121','20180122','20180123','20180125','20180126','20180129'] #
+        #self.test_date = ['20180111','20180118', '20180131'] #
+        self.train_date = ['20190502', '20190503', '20190504', '20190505', '20190506', '20190508', '20190510', '20190511','20190515','20190516',
+                '20190520']#
+        self.test_date = ['20190509','20190512', '20190521']
 
         self.input_param = input_param
         self.seq_len = input_param['seq_length']
@@ -106,10 +111,14 @@ class DataProcess:
             tmp_path_ = os.path.join(path_, date_+".nc")
             if os.path.exists(tmp_path_):
                 file_list.append(tmp_path_)
-        mode_data = xr.open_mfdataset(file_list, combine="nested", concat_dim="time", drop_variables=self.drop_category)
-        mode_data = mode_data.RA_RAHKDPComp
-        size_ = len(mode_data)
-        num_splits = int(size_/288)
+
+        mode_data = xr.open_mfdataset(file_list, combine="nested", concat_dim="time", engine="h5netcdf", drop_variables=self.drop_category)
+        mode_data = mode_data.RA_RAHKDPComp[:, 40:1160, 110:990] #crop the actual data(1200x1100) and take only image sized(1120x880) data
+        
+        reshaped_data = mode_data.coarsen(dim={"x": 4, "y": 4}).mean() #reshaped data 4x4 into 1 by taking mean new image size (280x220)
+        
+        size_ = len(reshaped_data)
+        num_splits = int(size_/288) #splitting data based on one single day
         indices = []
         for i in range(num_splits):
             d_start = int(round(i * size_/(num_splits*1.0),0))
@@ -118,9 +127,9 @@ class DataProcess:
                 indices.append(d_start)
                 d_start += self.seq_len
         
-        print("there are " + str(mode_data.shape[0]) + " pictures")
+        print("there are " + str(size_) + " pictures")
         print("there are " + str(len(indices)) + " sequences")
-        return mode_data, indices
+        return reshaped_data, indices
 
     def get_train_input_handle(self):
         train_data, train_indices = self.load_data(self.paths, mode='train')

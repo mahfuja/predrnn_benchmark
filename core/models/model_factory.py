@@ -1,5 +1,6 @@
 import os
 import torch
+from torchinfo import summary
 from torch.optim import Adam
 from core.models import predrnn, predrnn_v2, action_cond_predrnn, action_cond_predrnn_v2
 
@@ -22,7 +23,7 @@ class Model(object):
             raise ValueError('Name of network unknown %s' % configs.model_name)
 
         self.optimizer = Adam(self.network.parameters(), lr=configs.lr)
-
+        print(summary(self.network))#, input_size=(configs.batch_size,configs.total_length,1200,1100), depth=4))
     def save(self, itr):
         stats = {}
         stats['net_param'] = self.network.state_dict()

@@ -103,7 +103,7 @@ def test(model, test_input_handle, configs, itr):
 
             psnr[i] += metrics.batch_psnr(pred_frm, real_frm)
             for b in range(configs.batch_size):
-                score, _ = compare_ssim(pred_frm[b], real_frm[b], full=True, channel_axis = 2)
+                score, _ = compare_ssim(pred_frm[b], real_frm[b], full=True, channel_axis = -1)
                 ssim[i] += score
 
         # save prediction examples
@@ -113,7 +113,12 @@ def test(model, test_input_handle, configs, itr):
             for i in range(configs.total_length):
                 name = 'gt' + str(i + 1) + '.png'
                 file_name = os.path.join(path, name)
-                img_gt = np.uint8(test_ims[0, i, :, :, :] * 255)
+                img_gt = test_ims[0, i, :, :, :]
+                img_gt = np.maximum(img_gt, 0)
+                img_gt = np.minimum(img_gt, 1)
+                img_gt = np.uint8(img_gt * 255)
+                if configs.dataset_name == 'benchmark':
+                    img_gt = cv2.applyColorMap(img_gt, cv2.COLORMAP_JET)
                 cv2.imwrite(file_name, img_gt)
             for i in range(output_length):
                 name = 'pd' + str(i + 1 + configs.input_length) + '.png'
@@ -122,6 +127,8 @@ def test(model, test_input_handle, configs, itr):
                 img_pd = np.maximum(img_pd, 0)
                 img_pd = np.minimum(img_pd, 1)
                 img_pd = np.uint8(img_pd * 255)
+                if configs.dataset_name == 'benchmark':
+                    img_pd = cv2.applyColorMap(img_pd, cv2.COLORMAP_JET)
                 cv2.imwrite(file_name, img_pd)
         test_input_handle.next()
 
